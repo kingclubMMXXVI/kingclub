@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Members — King Club</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header>
@@ -20,7 +19,7 @@
         <div class="container">
             <div class="dash-head">
                 <div>
-                    <div class="kicker" id="userTag">Private members' area</div>
+                    <div class="kicker" id="sessionTag">Private members' area</div>
                     <h2>The Calendar</h2>
                     <p class="lead">Welcome to the inner circle. Keep these dates private.</p>
                 </div>
@@ -32,22 +31,22 @@
                 <div class="member-card"><div class="bigdate">NOV 21</div><h3>Winter Gathering</h3><p>Private evening · 6:30 PM<br>Members only</p></div>
             </div>
 
-            <!-- ADMIN TERMINAL -->
+            <!-- MANAGEMENT TERMINAL (Visible to Admins) -->
             <div id="adminTerminal" style="display:none; margin-top:60px; border-top:1px solid var(--line); padding-top:40px;">
                 <div class="kicker">Admin Terminal</div>
-                <h2>Member Credentials Portal</h2>
-                <p class="lead" style="margin-bottom: 25px;">Add new members or view active member accounts.</p>
+                <h2>Member Management Portal</h2>
+                <p class="lead" style="margin-bottom: 25px;">Add new members, view passwords, or revoke access.</p>
 
                 <div class="login-box" style="width:100%; text-align:left; margin-bottom:30px;">
-                    <h3>Create New Member Credentials</h3>
+                    <h3>Add New Member Credentials</h3>
                     <form id="addMemberForm" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">
                         <div class="field">
                             <label>Member ID</label>
-                            <input id="newMemberId" required placeholder="e.g. KING002">
+                            <input id="newId" required placeholder="e.g. KING002">
                         </div>
                         <div class="field">
                             <label>Password</label>
-                            <input id="newPassword" type="password" required placeholder="Assign password">
+                            <input id="newPass" required placeholder="Set password">
                         </div>
                         <div class="field">
                             <label>Role</label>
@@ -57,19 +56,21 @@
                             </select>
                         </div>
                         <div style="grid-column: 1 / -1;">
-                            <button class="cta" type="submit">Create Member</button>
+                            <button class="cta" type="submit">Add Member</button>
                         </div>
                     </form>
-                    <p id="adminMsg" class="error" style="display:none;"></p>
+                    <p id="adminError" class="error" style="display:none;"></p>
                 </div>
 
-                <h3>Active Member Directory</h3>
+                <h3>Active Credentials Directory</h3>
                 <table style="width:100%; border-collapse:collapse; margin-top:15px; font-size:0.9rem;">
                     <thead>
                         <tr style="border-bottom:1px solid var(--line); text-align:left; color:var(--gold);">
                             <th style="padding:10px;">Member ID</th>
+                            <th style="padding:10px;">Password</th>
                             <th style="padding:10px;">Role</th>
                             <th style="padding:10px;">Created</th>
+                            <th style="padding:10px;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="memberTableBody"></tbody>
@@ -77,80 +78,83 @@
             </div>
         </div>
     </main>
+    <footer>
+        <div class="container footerin">
+            <span>© 2026 THE KING CLUB</span>
+            <span>CONFIDENTIAL · MEMBERS ONLY</span>
+        </div>
+    </footer>
 
     <script>
-        const SUPABASE_URL = 'https://wdcgipdavwsxjfrzweuu.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkY2dpcGRhdndzeGpmcnp3ZXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNjc2NzksImV4cCI6MjEwNDY0MzY3OX0.xeepZnb3pbEpK1-ZQob3YNaTSFR-BjJSgOhwuga_wA4';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const sessionData = sessionStorage.getItem("kingClubSession");
+        if (!sessionData) {
+            location.href = "login.html";
+        }
 
-        async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                location.href = "login.html";
+        const currentUser = JSON.parse(sessionData || "{}");
+        document.getElementById("sessionTag").textContent = `Logged in as: ${currentUser.id} (${currentUser.role})`;
+
+        // Render admin functionality if user is admin
+        if (currentUser.role === "admin") {
+            document.getElementById("adminTerminal").style.display = "block";
+            renderTable();
+        }
+
+        function getUsers() {
+            return JSON.parse(localStorage.getItem("kingClubUsers") || "[]");
+        }
+
+        function renderTable() {
+            const users = getUsers();
+            const tbody = document.getElementById("memberTableBody");
+            tbody.innerHTML = users.map(user => `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:12px 10px;">${user.id}</td>
+                    <td style="padding:12px 10px; font-family:monospace; color:var(--gold);">${user.pass}</td>
+                    <td style="padding:12px 10px; text-transform:uppercase; font-size:0.75rem;">${user.role}</td>
+                    <td style="padding:12px 10px; color:var(--muted);">${user.created || 'N/A'}</td>
+                    <td style="padding:12px 10px;">
+                        ${user.id !== 'KING001' ? `<button onclick="deleteMember('${user.id}')" style="background:transparent; color:#e7a3a3; border:1px solid #e7a3a3; padding:4px 8px; cursor:pointer;">Delete</button>` : '<span style="color:var(--muted); font-size:0.75rem;">Default</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById("addMemberForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const newId = document.getElementById("newId").value.trim().toUpperCase();
+            const newPass = document.getElementById("newPass").value.trim();
+            const newRole = document.getElementById("newRole").value;
+            const errEl = document.getElementById("adminError");
+
+            let users = getUsers();
+            if (users.some(u => u.id.toUpperCase() === newId)) {
+                errEl.textContent = "Member ID already exists.";
+                errEl.style.display = "block";
                 return;
             }
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+            errEl.style.display = "none";
+            const today = new Date().toISOString().split('T')[0];
+            users.push({ id: newId, pass: newPass, role: newRole, created: today });
+            localStorage.setItem("kingClubUsers", JSON.stringify(users));
 
-            if (profile) {
-                document.getElementById('userTag').textContent = `Logged in as: ${profile.member_id} (${profile.role})`;
-
-                if (profile.role === 'admin') {
-                    document.getElementById('adminTerminal').style.display = 'block';
-                    loadDirectory();
-                }
-            }
-        }
-
-        async function loadDirectory() {
-            const { data: members } = await supabase.from('profiles').select('*');
-            if (members) {
-                const tbody = document.getElementById('memberTableBody');
-                tbody.innerHTML = members.map(m => `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding:12px 10px;">${m.member_id}</td>
-                        <td style="padding:12px 10px; text-transform:uppercase; font-size:0.75rem;">${m.role}</td>
-                        <td style="padding:12px 10px; color:var(--muted);">${new Date(m.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const msgEl = document.getElementById('adminMsg');
-            msgEl.style.display = 'none';
-
-            const memberId = document.getElementById('newMemberId').value.trim().toUpperCase();
-            const password = document.getElementById('newPassword').value;
-            const role = document.getElementById('newRole').value;
-            const email = `${memberId.toLowerCase()}@kingclub.internal`;
-
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                msgEl.textContent = error.message;
-                msgEl.style.display = 'block';
-            } else if (data.user) {
-                await supabase.from('profiles').insert([{ id: data.user.id, member_id: memberId, role: role }]);
-                document.getElementById('addMemberForm').reset();
-                loadDirectory();
-            }
+            document.getElementById("addMemberForm").reset();
+            renderTable();
         });
 
-        document.getElementById("logout").onclick = async () => {
-            await supabase.auth.signOut();
+        function deleteMember(id) {
+            if (confirm(`Remove access for ${id}?`)) {
+                let users = getUsers().filter(u => u.id !== id);
+                localStorage.setItem("kingClubUsers", JSON.stringify(users));
+                renderTable();
+            }
+        }
+
+        document.getElementById("logout").onclick = () => {
+            sessionStorage.removeItem("kingClubSession");
             location.href = "login.html";
         };
-
-        init();
     </script>
 </body>
 </html>
