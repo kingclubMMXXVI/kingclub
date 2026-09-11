@@ -19,11 +19,15 @@
         <div class="container">
             <div class="dash-head">
                 <div>
-                    <div class="kicker" id="sessionTag">Private members' area</div>
+                    <!-- SECRET TRIGGER WRAPPED IN SPAN -->
+                    <div class="kicker" id="sessionTag">
+                        <span id="secretTrigger" style="cursor: pointer; text-decoration: underline; color: var(--gold);">Logged</span> in as: KING001
+                    </div>
                     <h2>The Calendar</h2>
                     <p class="lead">Welcome to the inner circle. Keep these dates private.</p>
                 </div>
             </div>
+            
             <div class="member-grid">
                 <div class="member-card"><div class="bigdate">OCT 04</div><h3>Founder's Dinner</h3><p>Formal dinner · 7:00 PM<br>Members + invited guests</p></div>
                 <div class="member-card"><div class="bigdate">OCT 18</div><h3>King's Games</h3><p>Competitive afternoon · 2:00 PM<br>Members only</p></div>
@@ -86,13 +90,17 @@
     </footer>
 
     <script>
+        // Check session access
         const sessionData = sessionStorage.getItem("kingClubSession");
         if (!sessionData) {
             location.href = "login.html";
         }
 
         const currentUser = JSON.parse(sessionData || "{}");
-        document.getElementById("sessionTag").textContent = `Logged in as: ${currentUser.id} (${currentUser.role})`;
+        
+        // Render current user status text
+        const sessionTag = document.getElementById("sessionTag");
+        sessionTag.innerHTML = `<span id="secretTrigger" style="cursor: pointer; text-decoration: underline; color: var(--gold);">Logged</span> in as: ${currentUser.id} (${currentUser.role})`;
 
         // Render admin functionality if user is admin
         if (currentUser.role === "admin") {
@@ -155,6 +163,24 @@
             sessionStorage.removeItem("kingClubSession");
             location.href = "login.html";
         };
+
+        // SECRET CASINO TRIGGER (3 Rapid Clicks)
+        let secretClicks = 0;
+        let clickTimer;
+        
+        document.getElementById('secretTrigger').addEventListener('click', () => {
+            secretClicks++;
+            clearTimeout(clickTimer);
+            
+            clickTimer = setTimeout(() => { secretClicks = 0; }, 2000);
+
+            if (secretClicks >= 3) {
+                if (!localStorage.getItem('casinoBalance')) {
+                    localStorage.setItem('casinoBalance', '1000');
+                }
+                location.href = 'casino.html';
+            }
+        });
     </script>
 </body>
 </html>
