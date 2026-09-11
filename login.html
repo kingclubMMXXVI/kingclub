@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Member Login — King Club</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header>
@@ -39,29 +38,31 @@
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://wdcgipdavwsxjfrzweuu.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkY2dpcGRhdndzeGpmcnp3ZXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNjc2NzksImV4cCI6MjEwNDY0MzY3OX0.xeepZnb3pbEpK1-ZQob3YNaTSFR-BjJSgOhwuga_wA4';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Default seed credentials
+        const DEFAULT_MEMBERS = [
+            { id: "KING001", pass: "MMXXVI", role: "admin", created: "2026-09-01" }
+        ];
 
-        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        // Initialize local database if it doesn't exist
+        if (!localStorage.getItem("kingClubUsers")) {
+            localStorage.setItem("kingClubUsers", JSON.stringify(DEFAULT_MEMBERS));
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", (e) => {
             e.preventDefault();
+            const inputId = document.getElementById("username").value.trim().toUpperCase();
+            const inputPass = document.getElementById("password").value;
             const errorEl = document.getElementById("error");
-            errorEl.style.display = "none";
 
-            const memberId = document.getElementById("username").value.trim().toUpperCase();
-            const password = document.getElementById("password").value;
-            const email = `${memberId.toLowerCase()}@kingclub.internal`;
+            const users = JSON.parse(localStorage.getItem("kingClubUsers") || "[]");
+            const match = users.find(user => user.id.toUpperCase() === inputId && user.pass === inputPass);
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                errorEl.textContent = "Invalid Member ID or password.";
-                errorEl.style.display = "block";
-            } else {
+            if (match) {
+                // Save active session
+                sessionStorage.setItem("kingClubSession", JSON.stringify(match));
                 location.href = "members.html";
+            } else {
+                errorEl.style.display = "block";
             }
         });
     </script>
