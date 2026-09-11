@@ -1,1 +1,69 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Member Login — King Club</title><link rel="stylesheet" href="style.css"></head><body><header><div class="container"><nav><a class="brand" href="index.html">KING <span>CLUB</span></a><div class="navlinks"><a href="index.html">Public Site</a></div></nav></div></header><main class="login-wrap"><div class="login-box"><div class="crest"></div><div class="kicker">Members only</div><h2>Member Login</h2><p>Enter your credentials to access the private King Club calendar.</p><form id="loginForm"><div class="field"><label for="username">Member ID</label><input id="username" autocomplete="username" required placeholder="Enter member ID"></div><div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Enter password"></div><button class="cta" type="submit">Enter the Club</button><p class="error" id="error">Invalid member ID or password.</p></form><a class="back" href="index.html">← Return to public site</a></div></main><script>const DEMO_ID="KING001",DEMO_PASSWORD="MMXXVI";document.getElementById("loginForm").addEventListener("submit",e=>{e.preventDefault();if(document.getElementById("username").value.trim()===DEMO_ID&&document.getElementById("password").value===DEMO_PASSWORD){sessionStorage.setItem("kingClubMember","1");location.href="members.html"}else document.getElementById("error").style.display="block"});</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Member Login — King Club</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a class="brand" href="index.html">KING <span>CLUB</span></a>
+                <div class="navlinks"><a href="index.html">Public Site</a></div>
+            </nav>
+        </div>
+    </header>
+    <main class="login-wrap">
+        <div class="login-box">
+            <div class="crest"></div>
+            <div class="kicker">Members only</div>
+            <h2>Member Login</h2>
+            <p>Enter your credentials to access the private King Club calendar.</p>
+            <form id="loginForm">
+                <div class="field">
+                    <label for="username">Member ID</label>
+                    <input id="username" autocomplete="username" required placeholder="Enter member ID">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" autocomplete="current-password" required placeholder="Enter password">
+                </div>
+                <button class="cta" type="submit">Enter the Club</button>
+                <p class="error" id="error">Invalid member ID or password.</p>
+            </form>
+            <a class="back" href="index.html">← Return to public site</a>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://wdcgipdavwsxjfrzweuu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkY2dpcGRhdndzeGpmcnp3ZXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNjc2NzksImV4cCI6MjEwNDY0MzY3OX0.xeepZnb3pbEpK1-ZQob3YNaTSFR-BjJSgOhwuga_wA4';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById("error");
+            errorEl.style.display = "none";
+
+            const memberId = document.getElementById("username").value.trim().toUpperCase();
+            const password = document.getElementById("password").value;
+            const email = `${memberId.toLowerCase()}@kingclub.internal`;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                errorEl.textContent = "Invalid Member ID or password.";
+                errorEl.style.display = "block";
+            } else {
+                location.href = "members.html";
+            }
+        });
+    </script>
+</body>
+</html>
